@@ -5,9 +5,10 @@ import Dashboard from './pages/Dashboard';
 import MaintenanceRequestPage from './pages/MaintenanceRequest';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Calendar from './pages/Calendar';
 
-// 1. IMPORT YOUR NEW CALENDAR PAGE HERE
-import Calendar from './pages/Calendar'; 
+// 1. IMPORT THE NEW PAGE
+import EquipmentPage from './pages/Equipment'; 
 
 const App = () => {
   return (
@@ -19,13 +20,13 @@ const App = () => {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/requests/new" element={<MaintenanceRequestPage />} />
-          
-          {/* 2. UPDATE THIS LINE TO USE THE COMPONENT */}
           <Route path="/calendar" element={<Calendar />} />
           
-          <Route path="/equipment" element={<div>Equipment Page</div>} />
-          <Route path="/reporting" element={<div>Reporting Page</div>} />
-          <Route path="/teams" element={<div>Teams Page</div>} />
+          {/* 2. UPDATE THIS LINE TO USE THE REAL COMPONENT */}
+          <Route path="/equipment" element={<EquipmentPage />} />
+          
+          <Route path="/reporting" element={<div>Reporting Page (Coming Soon)</div>} />
+          <Route path="/teams" element={<div>Teams Page (Coming Soon)</div>} />
         </Route>
       </Routes>
     </Router>
