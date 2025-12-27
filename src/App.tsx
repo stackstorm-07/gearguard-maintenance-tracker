@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Calendar from './pages/Calendar';
 import EquipmentPage from './pages/Equipment';
+import ReportingPage from './pages/Reporting'; // <--- IMPORT THIS
 
 // 1. IMPORT TEAMS PAGE
 import TeamsPage from './pages/Teams'; 
@@ -27,7 +28,7 @@ const App = () => {
           {/* 2. UPDATE THIS LINE */}
           <Route path="/teams" element={<TeamsPage />} />
           
-          <Route path="/reporting" element={<div>Reporting Page (Coming Soon)</div>} />
+          <Route path="/reporting" element={<ReportingPage />} />
         </Route>
       </Routes>
     </Router>

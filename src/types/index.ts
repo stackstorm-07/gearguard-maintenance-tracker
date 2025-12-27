@@ -1,7 +1,7 @@
 export type PriorityLevel = 'Low' | 'Medium' | 'High';
 export type MaintenanceType = 'Corrective' | 'Preventive';
 export type RequestStage = 'New Request' | 'In Progress' | 'Repaired' | 'Scrap';
-
+export type EquipmentStatus = 'Operational' | 'Under Maintenance' | 'Scrap';
 // --- USERS ---
 export interface User {
   id: string;
@@ -24,6 +24,7 @@ export interface Equipment {
   name: string;
   category: string;
   company: string;
+  status: EquipmentStatus; // <--- ADD THIS
   
   // Optional fields (marked with ?) so "New" forms don't break
   serialNumber?: string;
@@ -72,3 +73,4 @@ export interface MaintenanceRequest {
   notes?: string;
   instructions?: string;
 }
+

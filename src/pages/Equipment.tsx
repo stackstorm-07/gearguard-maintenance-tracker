@@ -3,16 +3,77 @@ import { Equipment, WorkCenter } from '../types';
 import EquipmentModal from '../components/equipment/EquipmentModal';
 
 // --- MOCK DATA (Updated with new fields) ---
+// --- UPDATED MOCK DATA ---
+// Now includes all fields: status, location, usedBy, scrapDate, etc.
 const INITIAL_EQUIPMENT: Equipment[] = [
   { 
-    id: '1', name: 'Samsung Monitor 15"', employee: 'Tejas Modi', department: 'Admin', 
-    serialNumber: 'MT/125/22778837', technician: 'Mitchell Admin', category: 'Monitors', 
-    company: 'My Company', maintenanceTeam: 'Internal Maintenance', assignedDate: '2024-01-15'
+    id: '1', 
+    name: 'Samsung Monitor 15"', 
+    category: 'Monitors', 
+    company: 'My Company (San Francisco)', 
+    serialNumber: 'MT/125/22778837', 
+    technician: 'Mitchell Admin', 
+    employee: 'Tejas Modi', 
+    department: 'Admin', 
+    maintenanceTeam: 'Internal Maintenance', 
+    assignedDate: '2024-01-15',
+    usedBy: 'Tejas Modi',
+    location: 'Building A, Floor 2',
+    status: 'Operational',
+    workCenter: 'WC-Admin',
+    description: 'Standard issue monitor for admin staff.'
   },
   { 
-    id: '2', name: 'Acer Laptop', employee: 'Bhaumik P', department: 'Technician', 
-    serialNumber: 'MT/122/11112222', technician: 'Marc Demo', category: 'Computers', 
-    company: 'My Company', maintenanceTeam: 'IT Support'
+    id: '2', 
+    name: 'Acer Laptop', 
+    category: 'Computers', 
+    company: 'My Company (San Francisco)', 
+    serialNumber: 'MT/122/11112222', 
+    technician: 'Marc Demo', 
+    employee: 'Bhaumik P', 
+    department: 'Technician', 
+    maintenanceTeam: 'IT Support',
+    assignedDate: '2024-02-10',
+    usedBy: 'Bhaumik P',
+    location: 'Field Operations',
+    status: 'Under Maintenance',
+    workCenter: '-',
+    description: 'High-performance laptop for field technicians.'
+  },
+  { 
+    id: '3', 
+    name: 'CNC Lathe Machine', 
+    category: 'Machinery', 
+    company: 'My Company (San Francisco)', 
+    serialNumber: 'CNC-998877', 
+    technician: 'Aka Foster', 
+    employee: '-', 
+    department: 'Production', 
+    maintenanceTeam: 'Internal Maintenance',
+    assignedDate: '2023-11-05',
+    usedBy: 'Production Team',
+    location: 'Factory Floor, Zone 4',
+    status: 'Operational',
+    workCenter: 'WC-002',
+    description: 'Heavy duty lathe for metal working.'
+  },
+  { 
+    id: '4', 
+    name: 'Old Generator', 
+    category: 'Power', 
+    company: 'My Company (San Francisco)', 
+    serialNumber: 'GEN-OLD-001', 
+    technician: 'Marc Demo', 
+    employee: '-', 
+    department: 'Utility', 
+    maintenanceTeam: 'Internal Maintenance',
+    assignedDate: '2020-01-01',
+    scrapDate: '2025-01-01', // Example of scrapped item
+    usedBy: '-',
+    location: 'Warehouse B',
+    status: 'Scrap',
+    workCenter: '-',
+    description: 'Decommissioned generator.'
   }
 ];
 
