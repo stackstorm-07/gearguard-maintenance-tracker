@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Team } from '../types';
+import TeamModal from '../components/teams/TeamModal';
 
 // --- MOCK DATA: TEAMS ---
 const MOCK_TEAMS: Team[] = [
@@ -9,10 +10,38 @@ const MOCK_TEAMS: Team[] = [
 ];
 
 const TeamsPage = () => {
+  // 1. Use State for Teams (so we can add/edit them)
+  const [teams, setTeams] = useState<Team[]>(MOCK_TEAMS);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // FILTER LOGIC
-  const filteredTeams = MOCK_TEAMS.filter(team => 
+  // 2. Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+
+  // 3. Handlers
+  const handleAddNew = () => {
+    setSelectedTeam(null); // Clear selection for new team
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (team: Team) => {
+    setSelectedTeam(team); // Load existing team data
+    setIsModalOpen(true);
+  };
+
+  const handleSaveTeam = (data: Team) => {
+    if (selectedTeam) {
+        // Update existing team
+        setTeams(prev => prev.map(t => t.id === data.id ? data : t));
+    } else {
+        // Add new team
+        setTeams(prev => [...prev, data]);
+    }
+    setIsModalOpen(false);
+  };
+
+  // FILTER LOGIC (Uses 'teams' state now, not constant)
+  const filteredTeams = teams.filter(team => 
     team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     team.members.some(member => member.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -25,7 +54,7 @@ const TeamsPage = () => {
         <h1 style={{ margin: 0, fontSize: '24px', color: '#1f2937' }}>Teams</h1>
         
         <button 
-          onClick={() => alert('New Team Popup Coming Soon!')}
+          onClick={handleAddNew}
           style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 500 }}
         >
           + New
@@ -59,7 +88,13 @@ const TeamsPage = () => {
             </thead>
             <tbody>
                 {filteredTeams.map(team => (
-                    <tr key={team.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <tr 
+                        key={team.id} 
+                        onClick={() => handleEdit(team)} // Make row clickable
+                        style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer', transition: 'background 0.2s' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
                         <td style={tdStyle}>{team.name}</td>
                         <td style={tdStyle}>
                             {team.members.map((member, index) => (
@@ -73,7 +108,12 @@ const TeamsPage = () => {
                         </td>
                         <td style={tdStyle}>{team.company}</td>
                         <td style={tdStyle}>
-                            <button style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); alert('Delete logic coming next!'); }}
+                                style={{ color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
                         </td>
                     </tr>
                 ))}
@@ -87,6 +127,14 @@ const TeamsPage = () => {
             </div>
         )}
       </div>
+
+      {/* 4. MODAL */}
+      <TeamModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialData={selectedTeam}
+        onSave={handleSaveTeam}
+      />
 
     </div>
   );

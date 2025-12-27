@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Equipment, WorkCenter } from '../types';
 import EquipmentModal from '../components/equipment/EquipmentModal';
+import WorkCenterModal from '../components/equipment/WorkCenterModal'; // 1. Import WorkCenterModal
 
 // --- MOCK DATA (Updated with new fields) ---
-// --- UPDATED MOCK DATA ---
-// Now includes all fields: status, location, usedBy, scrapDate, etc.
 const INITIAL_EQUIPMENT: Equipment[] = [
   { 
     id: '1', 
@@ -68,7 +67,7 @@ const INITIAL_EQUIPMENT: Equipment[] = [
     department: 'Utility', 
     maintenanceTeam: 'Internal Maintenance',
     assignedDate: '2020-01-01',
-    scrapDate: '2025-01-01', // Example of scrapped item
+    scrapDate: '2025-01-01', 
     usedBy: '-',
     location: 'Warehouse B',
     status: 'Scrap',
@@ -77,7 +76,7 @@ const INITIAL_EQUIPMENT: Equipment[] = [
   }
 ];
 
-// ... Keep MOCK_WORK_CENTERS as is ...
+// --- MOCK WORK CENTERS ---
 const MOCK_WORK_CENTERS: WorkCenter[] = [
   { id: '1', name: 'Assembly 1', code: 'WC-001', tag: 'Standard', alternativeWorkcenter: 'Assembly 2', costPerHour: 50.00, capacityEfficiency: 100.00, oeeTarget: 95.00 },
   { id: '2', name: 'Drill 1', code: 'WC-002', tag: 'Heavy', alternativeWorkcenter: 'Drill 2', costPerHour: 85.00, capacityEfficiency: 100.00, oeeTarget: 90.00 },
@@ -87,37 +86,56 @@ const EquipmentPage = () => {
   const [activeTab, setActiveTab] = useState<'equipment' | 'workCenter'>('equipment');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // MODAL STATE
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // MODAL STATES
+  const [isEquipModalOpen, setIsEquipModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  
+  const [isWCModalOpen, setIsWCModalOpen] = useState(false); // New State
+  const [selectedWC, setSelectedWC] = useState<WorkCenter | null>(null); // New State
+
+  // DATA STATES
   const [equipmentList, setEquipmentList] = useState<Equipment[]>(INITIAL_EQUIPMENT);
+  const [wcList, setWcList] = useState<WorkCenter[]>(MOCK_WORK_CENTERS);
 
   // HANDLERS
   const handleAddNew = () => {
-    if (activeTab === 'workCenter') {
-        alert('Work Center creation coming soon!');
-        return;
+    if (activeTab === 'equipment') {
+        setSelectedEquipment(null);
+        setIsEquipModalOpen(true);
+    } else {
+        // Open Work Center Modal
+        setSelectedWC(null);
+        setIsWCModalOpen(true);
     }
-    setSelectedEquipment(null); // Clear selection for new entry
-    setIsModalOpen(true);
   };
 
-  const handleRowClick = (item: Equipment) => {
+  const handleRowClick = (item: any) => {
     if (activeTab === 'equipment') {
-        setSelectedEquipment(item);
-        setIsModalOpen(true);
+        setSelectedEquipment(item as Equipment);
+        setIsEquipModalOpen(true);
+    } else {
+        // Open Work Center Modal
+        setSelectedWC(item as WorkCenter);
+        setIsWCModalOpen(true);
     }
   };
 
   const handleSaveEquipment = (data: Equipment) => {
     if (selectedEquipment) {
-        // Edit Mode: Update existing
         setEquipmentList(prev => prev.map(item => item.id === data.id ? data : item));
     } else {
-        // Create Mode: Add new
         setEquipmentList(prev => [...prev, data]);
     }
-    setIsModalOpen(false);
+    setIsEquipModalOpen(false);
+  };
+
+  const handleSaveWC = (data: WorkCenter) => {
+    if (selectedWC) {
+        setWcList(prev => prev.map(item => item.id === data.id ? data : item));
+    } else {
+        setWcList(prev => [...prev, data]);
+    }
+    setIsWCModalOpen(false);
   };
 
   // FILTER LOGIC
@@ -126,7 +144,7 @@ const EquipmentPage = () => {
     (item.serialNumber && item.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const filteredWorkCenters = MOCK_WORK_CENTERS.filter(item => 
+  const filteredWorkCenters = wcList.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -141,7 +159,6 @@ const EquipmentPage = () => {
         </h1>
         
         <div style={{ display: 'flex', gap: '12px' }}>
-            {/* Tab Switcher */}
             <div style={{ display: 'flex', backgroundColor: '#f3f4f6', borderRadius: '8px', padding: '4px' }}>
                 <button 
                     onClick={() => setActiveTab('equipment')}
@@ -197,12 +214,12 @@ const EquipmentPage = () => {
                 <tr>
                     {activeTab === 'equipment' ? (
                         <>
+                            <th style={thStyle}>Status</th>
                             <th style={thStyle}>Equipment Name</th>
-                            <th style={thStyle}>Employee</th>
+                            <th style={thStyle}>Used By</th>
                             <th style={thStyle}>Serial Number</th>
                             <th style={thStyle}>Technician</th>
-                            <th style={thStyle}>Category</th>
-                            <th style={thStyle}>Company</th>
+                            <th style={thStyle}>Location</th>
                         </>
                     ) : (
                         <>
@@ -224,17 +241,31 @@ const EquipmentPage = () => {
                             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f9fafb'}
                             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                         >
+                            <td style={tdStyle}>
+                                <span style={{
+                                    padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 600,
+                                    backgroundColor: item.status === 'Operational' ? '#dcfce7' : item.status === 'Scrap' ? '#f3f4f6' : '#fee2e2',
+                                    color: item.status === 'Operational' ? '#166534' : item.status === 'Scrap' ? '#6b7280' : '#991b1b'
+                                }}>
+                                    {item.status || 'Unknown'}
+                                </span>
+                            </td>
                             <td style={tdStyle}>{item.name}</td>
-                            <td style={tdStyle}>{item.employee}</td>
+                            <td style={tdStyle}>{item.usedBy || item.employee || '-'}</td>
                             <td style={tdStyle}>{item.serialNumber || '-'}</td>
                             <td style={tdStyle}>{item.technician}</td>
-                            <td style={tdStyle}>{item.category}</td>
-                            <td style={tdStyle}>{item.company}</td>
+                            <td style={tdStyle}>{item.location || '-'}</td>
                         </tr>
                     ))
                 ) : (
                     filteredWorkCenters.map(item => (
-                        <tr key={item.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                        <tr 
+                            key={item.id} 
+                            onClick={() => handleRowClick(item)} 
+                            style={{ borderBottom: '1px solid #f3f4f6', cursor: 'pointer', transition: 'background 0.2s' }}
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
                             <td style={tdStyle}>{item.name}</td>
                             <td style={tdStyle}>{item.code}</td>
                             <td style={tdStyle}>${item.costPerHour.toFixed(2)}</td>
@@ -246,12 +277,19 @@ const EquipmentPage = () => {
         </table>
       </div>
 
-      {/* 4. EQUIPMENT MODAL */}
+      {/* 4. MODALS */}
       <EquipmentModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isEquipModalOpen}
+        onClose={() => setIsEquipModalOpen(false)}
         initialData={selectedEquipment}
         onSave={handleSaveEquipment}
+      />
+
+      <WorkCenterModal 
+        isOpen={isWCModalOpen}
+        onClose={() => setIsWCModalOpen(false)}
+        initialData={selectedWC}
+        onSave={handleSaveWC}
       />
 
     </div>
