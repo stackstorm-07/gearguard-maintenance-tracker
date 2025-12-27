@@ -1,22 +1,30 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import MaintenanceRequestPage from './pages/MaintenanceRequest';
-import Login from './pages/Login'; // Assuming you kept the previous login file
-import Signup from './pages/Signup'; // Assuming you kept the previous signup file
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./components/Layout";
+
+import Dashboard from "./pages/Dashboard";
+import MaintenanceRequest from "./pages/MaintenanceRequest";
+import MaintenanceRequestsList from "./pages/MaintenanceRequestsList";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 
 const App = () => {
   return (
     <Router>
       <Routes>
+        {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        
+
+        {/* Protected app layout */}
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/requests/new" element={<MaintenanceRequestPage />} />
-          {/* Placeholders for other pages */}
+
+          {/* Maintenance */}
+          <Route path="/requests" element={<MaintenanceRequestsList />} />
+          <Route path="/requests/new" element={<MaintenanceRequest />} />
+
+          {/* Other modules (placeholders) */}
           <Route path="/calendar" element={<div>Calendar Page</div>} />
           <Route path="/equipment" element={<div>Equipment Page</div>} />
           <Route path="/reporting" element={<div>Reporting Page</div>} />

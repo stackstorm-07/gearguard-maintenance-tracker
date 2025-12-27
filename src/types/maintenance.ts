@@ -1,0 +1,20 @@
+export type MaintenanceRequest = {
+  id: string;
+  maintenanceFor: string;
+  duration: number;
+  requestDate: string;
+  createdBy: string;
+  createdAt: number;
+  notes: string;
+  priority: string;
+  subject: string;
+  instructions: string;
+  technicianId: string;
+  status: string;
+  categoryId: string;
+  companyId: string;
+  equipmentId: string;
+  scheduledDate: string;
+  teamId: string;
+  maintenanceType: string;
+};
