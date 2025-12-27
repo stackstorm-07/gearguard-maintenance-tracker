@@ -1,27 +1,29 @@
-import { Routes, Route } from "react-router-dom";
-import MainLayout from "./layouts/MainLayout";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+import MaintenanceRequestPage from './pages/MaintenanceRequest';
+import Login from './pages/Login'; // Assuming you kept the previous login file
+import Signup from './pages/Signup'; // Assuming you kept the previous signup file
 
-import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard";
-import Equipment from "./pages/Equipment";
-import Maintenance from "./pages/Maintenance";
-import Calendar from "./pages/Calendar";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-
-const App = (): JSX.Element => {
+const App = () => {
   return (
-    <MainLayout>
+    <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/equipment" element={<Equipment />} />
-        <Route path="/maintenance" element={<Maintenance />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        
+        <Route element={<Layout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/requests/new" element={<MaintenanceRequestPage />} />
+          {/* Placeholders for other pages */}
+          <Route path="/calendar" element={<div>Calendar Page</div>} />
+          <Route path="/equipment" element={<div>Equipment Page</div>} />
+          <Route path="/reporting" element={<div>Reporting Page</div>} />
+          <Route path="/teams" element={<div>Teams Page</div>} />
+        </Route>
       </Routes>
-    </MainLayout>
+    </Router>
   );
 };
 
