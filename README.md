@@ -16,6 +16,11 @@ GearGuard is a full-stack Maintenance Management System (CMMS) built with **Reac
 Before you begin, ensure you have the following installed on your machine:
 - **Node.js** (v14 or higher) - [Download Here](https://nodejs.org/)
 - **npm** (comes with Node.js)
+- **run commands:**
+- npm i react-router-dom
+
+- Also install firebase.
+
 
 ---
 
