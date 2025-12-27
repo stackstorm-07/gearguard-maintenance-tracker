@@ -38,3 +38,36 @@ export interface MaintenanceRequest {
   // Lifecycle
   stage: RequestStage;
 }
+
+// ... (Keep existing MaintenanceRequest types)
+
+export interface Equipment {
+  id: string;
+  name: string; // "Samsung Monitor 15"
+  employee: string; // "Tejas Modi"
+  department: string; // "Admin"
+  serialNumber: string; // "MT/125/..."
+  technician: string; // "Mitchell Admin"
+  category: string; // "Monitors"
+  company: string; // "My Company..."
+}
+
+export interface WorkCenter {
+  id: string;
+  name: string; // "Assembly 1"
+  code: string; 
+  tag: string;
+  alternativeWorkcenter: string;
+  costPerHour: number;
+  capacityEfficiency: number; // 100.00
+  oeeTarget: number; // 90.00
+}
+
+// ... (Keep existing types)
+
+export interface Team {
+  id: string;
+  name: string; // "Internal Maintenance"
+  members: string[]; // ["Anas Makari", "Marc Demo"] - Array of names
+  company: string; // "My Company (San Francisco)"
+}

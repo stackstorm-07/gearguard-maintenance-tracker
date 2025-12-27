@@ -1,12 +1,15 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Layout from "./components/Layout";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
+import Dashboard from './pages/Dashboard';
+import MaintenanceRequestPage from './pages/MaintenanceRequest';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Calendar from './pages/Calendar';
+import EquipmentPage from './pages/Equipment';
 
-import Dashboard from "./pages/Dashboard";
-import MaintenanceRequest from "./pages/MaintenanceRequest";
-import MaintenanceRequestsList from "./pages/MaintenanceRequestsList";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
+// 1. IMPORT TEAMS PAGE
+import TeamsPage from './pages/Teams'; 
 
 const App = () => {
   return (
@@ -19,16 +22,14 @@ const App = () => {
         {/* Protected app layout */}
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
-
-          {/* Maintenance */}
-          <Route path="/requests" element={<MaintenanceRequestsList />} />
-          <Route path="/requests/new" element={<MaintenanceRequest />} />
-
-          {/* Other modules (placeholders) */}
-          <Route path="/calendar" element={<div>Calendar Page</div>} />
-          <Route path="/equipment" element={<div>Equipment Page</div>} />
-          <Route path="/reporting" element={<div>Reporting Page</div>} />
-          <Route path="/teams" element={<div>Teams Page</div>} />
+          <Route path="/requests/new" element={<MaintenanceRequestPage />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/equipment" element={<EquipmentPage />} />
+          
+          {/* 2. UPDATE THIS LINE */}
+          <Route path="/teams" element={<TeamsPage />} />
+          
+          <Route path="/reporting" element={<div>Reporting Page (Coming Soon)</div>} />
         </Route>
       </Routes>
     </Router>
