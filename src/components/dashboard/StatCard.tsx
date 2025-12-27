@@ -1,4 +1,3 @@
-// src/components/dashboard/StatCard.tsx
 import React from 'react';
 
 interface StatProps {
@@ -8,21 +7,23 @@ interface StatProps {
   textColor: string;
 }
 
-const StatCard: React.FC<StatProps> = ({ label, value, color, textColor }) => {
+const StatCard: React.FC<StatProps> = ({ label, value, textColor }) => {
   return (
     <div style={{ 
-      backgroundColor: 'white', 
+      backgroundColor: 'var(--card-bg)', // Uses theme card background
       padding: '20px', 
-      borderRadius: '8px', 
-      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+      borderRadius: 'var(--radius)', 
+      border: '1px solid var(--border)', // Adds border for definition
+      boxShadow: 'var(--shadow)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      borderTop: `4px solid ${textColor}`
+      borderTop: `4px solid ${textColor}`,
+      transition: 'background 0.3s ease, color 0.3s ease' // Smooth transition
     }}>
-      <h3 style={{ fontSize: '32px', margin: '0', color: textColor }}>{value}</h3>
-      <p style={{ margin: '5px 0 0 0', color: '#6b7280', fontSize: '14px', fontWeight: '500' }}>{label}</p>
+      <h3 style={{ fontSize: '32px', margin: '0', color: 'var(--text)' }}>{value}</h3>
+      <p style={{ margin: '5px 0 0 0', color: 'var(--subtext)', fontSize: '14px', fontWeight: '500' }}>{label}</p>
     </div>
   );
 };
