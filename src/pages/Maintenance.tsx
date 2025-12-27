@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import './maintenance.css'; 
+import './Maintenance.css'; 
 
 interface MaintenanceRequest {
   id: string;
@@ -25,7 +25,6 @@ const Maintenance = (): JSX.Element => {
   const [newTechnician, setNewTechnician] = useState('');
   const [newDuration, setNewDuration] = useState('');
   const [newScheduledDate, setNewScheduledDate] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const handleAddRequest = () => {
     const newRequest: MaintenanceRequest = {
@@ -88,16 +87,8 @@ const Maintenance = (): JSX.Element => {
     }
   };
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.body.classList.toggle('dark-mode', !isDarkMode);
-  };
-
   return (
     <section className="maintenance-section">
-      <button onClick={toggleDarkMode} className="dark-mode-button">
-        Dark Mode
-      </button>
 
       <div className="hero-section">
         <h1 className="page-title">Maintenance Requests</h1>
