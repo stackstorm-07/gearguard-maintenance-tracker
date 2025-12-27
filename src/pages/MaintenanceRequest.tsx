@@ -1,182 +1,199 @@
-import React, { useState } from 'react';
-import { MaintenanceRequest, PriorityLevel } from '../types';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { equipmentService } from '../services/equipmentService';
+import { teamService } from '../services/teamService';
+import { requestService } from '../services/requestService';
+import { Equipment, Team, MaintenanceRequest } from '../types';
 
 const MaintenanceRequestPage = () => {
-  // Mock Data / Form State
-  const [formData, setFormData] = useState<MaintenanceRequest>({
-    id: 'REQ-NEW',
-    subject: 'Test activity',
-    createdBy: 'Mitchell Admin',
-    maintenanceFor: 'Equipment',
-    equipmentId: 'Acer Laptop/LP/203/19281928',
-    category: 'Computers',
-    requestDate: new Date().toISOString().split('T')[0], // Auto-filled today
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  
+  // 1. Loading State
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // 2. Dropdown Data State
+  const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
+  const [teamList, setTeamList] = useState<Team[]>([]);
+
+  // 3. Form State
+  const [formData, setFormData] = useState<Partial<MaintenanceRequest>>({
+    subject: '',
+    maintenanceFor: 'Equipment', // Default
+    equipmentId: '', // Selected Equipment ID
     type: 'Corrective',
-    teamId: 'Internal Maintenance',
-    technicianId: 'Aka Foster',
-    scheduledDate: '2025-12-28T14:30',
-    duration: 0,
     priority: 'Medium',
-    company: 'My Company (San Francisco)',
-    stage: 'New Request',
-    notes: '',
-    instructions: ''
+    duration: 1,
+    teamId: '',
+    requestDate: new Date().toISOString().split('T')[0], // Today
+    scheduledDate: '',
+    description: '',
+    stage: 'New Request'
   });
 
-  const [activeTab, setActiveTab] = useState<'notes' | 'instructions'>('notes');
+  // --- FETCH DATA ON LOAD ---
+  useEffect(() => {
+    const loadDropdowns = async () => {
+      try {
+        const [equipData, teamData] = await Promise.all([
+          equipmentService.getAllEquipment(),
+          teamService.getAll()
+        ]);
+        setEquipmentList(equipData);
+        setTeamList(teamData);
+      } catch (error) {
+        console.error("Failed to load dropdowns:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadDropdowns();
+  }, []);
 
-  // Handle Text/Select Changes
+  // --- HANDLERS ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Priority Diamond Click Logic
-  const handlePriorityClick = (level: PriorityLevel) => {
-    setFormData(prev => ({ ...prev, priority: level }));
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      // 1. Find the actual names for display purposes
+      const selectedEquipment = equipmentList.find(e => e.id === formData.equipmentId);
+      const selectedTeam = teamList.find(t => t.id === formData.teamId);
+
+      // 2. Construct the full object
+      const newRequest: Omit<MaintenanceRequest, 'id'> = {
+        subject: formData.subject!,
+        createdBy: currentUser?.displayName || 'Unknown User', // Auto-fill User
+        maintenanceFor: formData.maintenanceFor as 'Equipment',
+        equipmentId: selectedEquipment ? selectedEquipment.name : 'Unknown Equipment', // Store Name for easy reading
+        category: selectedEquipment ? selectedEquipment.category : 'General',
+        requestDate: formData.requestDate!,
+        type: formData.type as any,
+        teamId: selectedTeam ? selectedTeam.name : 'Unassigned', // Store Team Name
+        technicianId: selectedEquipment?.technician || 'Unassigned', // Auto-assign tech from equipment
+        scheduledDate: formData.scheduledDate || new Date().toISOString(),
+        duration: Number(formData.duration),
+        priority: formData.priority as any,
+        company: 'My Company', // Hardcoded or from User profile
+        stage: 'New Request',
+        description: formData.description
+      };
+
+      // 3. Send to Firebase
+      await requestService.create(newRequest);
+      
+      alert('Ticket Created Successfully!');
+      navigate('/'); // Go back to Dashboard
+
+    } catch (error) {
+      console.error("Error creating ticket:", error);
+      alert("Failed to create ticket.");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Loading Form...</div>;
 
   return (
-    <div className="page-container">
+    <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto', backgroundColor: '#fff' }}>
+      <h1 style={{ marginBottom: '30px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>New Maintenance Request</h1>
       
-      {/* HEADER: Title & Status Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <div>
-           <div style={{ fontSize: '14px', color: '#6b7280' }}>Maintenance Requests / {formData.subject}</div>
-           <h1 style={{ margin: '4px 0 0', fontSize: '28px' }}>{formData.subject}</h1>
-        </div>
+      <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '20px' }}>
         
-        {/* Status Bar (Visual Only for now) */}
-        <div style={{ display: 'flex', border: '1px solid #d1d5db', borderRadius: '4px', overflow: 'hidden' }}>
-          {['New Request', 'In Progress', 'Repaired', 'Scrap'].map((stage) => (
-            <div key={stage} style={{ 
-              padding: '8px 16px', 
-              backgroundColor: formData.stage === stage ? '#2563eb' : '#f9fafb',
-              color: formData.stage === stage ? 'white' : '#4b5563',
-              borderRight: '1px solid #d1d5db',
-              fontSize: '14px',
-              fontWeight: '500'
-            }}>
-              {stage}
-            </div>
-          ))}
+        {/* Subject */}
+        <div className="form-group">
+           <label style={labelStyle}>Subject</label>
+           <input name="subject" value={formData.subject} onChange={handleChange} style={inputStyle} required placeholder="e.g. Conveyor Belt Stopped" />
         </div>
-      </div>
 
-      {/* MAIN FORM CARD */}
-      <div className="card">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-          
-          {/* LEFT COLUMN */}
-          <div>
-             <div className="form-group">
-                <label className="form-label">Created By</label>
-                <input name="createdBy" value={formData.createdBy} onChange={handleChange} className="form-input" />
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Maintenance For</label>
-                <select name="maintenanceFor" value={formData.maintenanceFor} onChange={handleChange} className="form-select">
-                  <option value="Equipment">Equipment</option>
-                  <option value="Work Center">Work Center</option>
+        {/* Row 1 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+                <label style={labelStyle}>Maintenance For</label>
+                <select name="maintenanceFor" value={formData.maintenanceFor} onChange={handleChange} style={inputStyle}>
+                    <option value="Equipment">Machine / Equipment</option>
+                    <option value="Work Center">Work Center</option>
                 </select>
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Equipment</label>
-                {/* Clicking mimics opening a popup */}
-                <div className="form-input" style={{ cursor: 'pointer', color: '#2563eb' }} onClick={() => alert('Open Equipment Popup')}>
-                  {formData.equipmentId} ▼
-                </div>
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Category</label>
-                <input name="category" value={formData.category} onChange={handleChange} className="form-input" />
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Request Date</label>
-                <input type="date" name="requestDate" value={formData.requestDate} disabled className="form-input" style={{ backgroundColor: '#f3f4f6' }} />
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Maintenance Type</label>
-                <div style={{ display: 'flex', gap: '20px', marginTop: '8px' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <input type="radio" name="type" value="Corrective" checked={formData.type === 'Corrective'} onChange={handleChange} /> Corrective
-                  </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <input type="radio" name="type" value="Preventive" checked={formData.type === 'Preventive'} onChange={handleChange} /> Preventive
-                  </label>
-                </div>
-             </div>
-          </div>
-
-          {/* RIGHT COLUMN */}
-          <div>
-            <div className="form-group">
-                <label className="form-label">Team</label>
-                <div className="form-input" style={{ cursor: 'pointer' }} onClick={() => alert('Open Team Popup')}>
-                  {formData.teamId} ▼
-                </div>
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Technician</label>
-                <input name="technicianId" value={formData.technicianId} onChange={handleChange} className="form-input" />
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Scheduled Date</label>
-                <input type="datetime-local" name="scheduledDate" value={formData.scheduledDate} onChange={handleChange} className="form-input" />
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Duration (hours)</label>
-                <input type="number" name="duration" value={formData.duration} onChange={handleChange} className="form-input" />
-             </div>
-
-             {/* PRIORITY DIAMONDS */}
-             <div className="form-group">
-                <label className="form-label">Priority</label>
-                <div className="diamond-container">
-                  {/* Logic: If priority is Medium, Low and Med diamonds are lit */}
-                  <div className={`diamond ${['Low', 'Medium', 'High'].includes(formData.priority) ? 'active' : ''}`} onClick={() => handlePriorityClick('Low')} />
-                  <div className={`diamond ${['Medium', 'High'].includes(formData.priority) ? 'active' : ''}`} onClick={() => handlePriorityClick('Medium')} />
-                  <div className={`diamond ${formData.priority === 'High' ? 'active' : ''}`} onClick={() => handlePriorityClick('High')} />
-                  <span style={{ marginLeft: '10px', fontSize: '13px', color: '#666' }}>({formData.priority})</span>
-                </div>
-             </div>
-
-             <div className="form-group">
-                <label className="form-label">Company</label>
-                <input name="company" value={formData.company} onChange={handleChange} className="form-input" />
-             </div>
-          </div>
+            </div>
+            
+            <div>
+                <label style={labelStyle}>Select Equipment</label>
+                <select name="equipmentId" value={formData.equipmentId} onChange={handleChange} style={inputStyle} required>
+                    <option value="">-- Select Machine --</option>
+                    {equipmentList.map(eq => (
+                        <option key={eq.id} value={eq.id}>{eq.name} ({eq.serialNumber})</option>
+                    ))}
+                </select>
+            </div>
         </div>
 
-        {/* FOOTER TABS (Notes & Instructions) */}
-        <div style={{ marginTop: '40px' }}>
-          <div className="tab-header">
-            <button className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')}>Notes</button>
-            <button className={`tab-btn ${activeTab === 'instructions' ? 'active' : ''}`} onClick={() => setActiveTab('instructions')}>Instructions</button>
-          </div>
-          
-          <textarea 
-            name={activeTab}
-            value={activeTab === 'notes' ? formData.notes : formData.instructions}
-            onChange={handleChange}
-            className="form-input"
-            rows={4}
-            placeholder={`Add ${activeTab} here...`}
-            style={{ width: '100%', resize: 'vertical' }}
-          />
+        {/* Row 2 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div>
+                <label style={labelStyle}>Assigned Team</label>
+                <select name="teamId" value={formData.teamId} onChange={handleChange} style={inputStyle} required>
+                    <option value="">-- Select Team --</option>
+                    {teamList.map(team => (
+                        <option key={team.id} value={team.id}>{team.name}</option>
+                    ))}
+                </select>
+            </div>
+            <div>
+                 <label style={labelStyle}>Request Date</label>
+                 <input type="date" name="requestDate" value={formData.requestDate} onChange={handleChange} style={inputStyle} />
+            </div>
         </div>
 
-      </div>
+        {/* Row 3 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+            <div>
+                <label style={labelStyle}>Priority</label>
+                <select name="priority" value={formData.priority} onChange={handleChange} style={inputStyle}>
+                    <option value="Low">Low</option>
+                    <option value="Medium">Medium</option>
+                    <option value="High">High</option>
+                </select>
+            </div>
+            <div>
+                <label style={labelStyle}>Type</label>
+                <select name="type" value={formData.type} onChange={handleChange} style={inputStyle}>
+                    <option value="Corrective">Corrective</option>
+                    <option value="Preventive">Preventive</option>
+                </select>
+            </div>
+            <div>
+                <label style={labelStyle}>Duration (Hours)</label>
+                <input type="number" name="duration" value={formData.duration} onChange={handleChange} style={inputStyle} />
+            </div>
+        </div>
+
+        {/* Description */}
+        <div>
+            <label style={labelStyle}>Description / Notes</label>
+            <textarea name="description" rows={4} value={formData.description} onChange={handleChange} style={{ ...inputStyle, resize: 'vertical' }} />
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '20px' }}>
+            <button type="button" onClick={() => navigate('/')} style={{ padding: '10px 20px', background: 'white', border: '1px solid #ccc', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" disabled={submitting} style={{ padding: '10px 30px', background: '#2563eb', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}>
+                {submitting ? 'Creating...' : 'Create Ticket'}
+            </button>
+        </div>
+
+      </form>
     </div>
   );
 };
+
+const labelStyle = { display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' };
+const inputStyle = { width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #d1d5db', fontSize: '14px', outline: 'none' };
 
 export default MaintenanceRequestPage;

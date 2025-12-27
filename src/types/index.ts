@@ -1,76 +1,69 @@
-export type PriorityLevel = 'Low' | 'Medium' | 'High';
-export type MaintenanceType = 'Corrective' | 'Preventive';
-export type RequestStage = 'New Request' | 'In Progress' | 'Repaired' | 'Scrap';
-export type EquipmentStatus = 'Operational' | 'Under Maintenance' | 'Scrap';
-// --- USERS ---
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'Admin' | 'Technician' | 'Portal User';
-}
-
-// --- MAINTENANCE TEAMS ---
-export interface Team {
-  id: string;
-  name: string;
-  members: string[];
-  company: string;
-}
-
-// --- EQUIPMENT & WORK CENTERS ---
+// --- 1. EQUIPMENT TYPE ---
 export interface Equipment {
   id: string;
   name: string;
   category: string;
   company: string;
-  status: EquipmentStatus; // <--- ADD THIS
-  
-  // Optional fields (marked with ?) so "New" forms don't break
-  serialNumber?: string;
-  technician?: string;
+  serialNumber: string;
+  technician: string;
   employee?: string;
   department?: string;
-  usedBy?: string;
   maintenanceTeam?: string;
   assignedDate?: string;
-  scrapDate?: string;
+  
+  // New fields we added recently
+  usedBy?: string;
   location?: string;
+  status?: string; // e.g., 'Operational', 'Under Maintenance', 'Scrap'
+  scrapDate?: string;
   workCenter?: string;
   description?: string;
 }
 
+// --- 2. WORK CENTER TYPE ---
 export interface WorkCenter {
   id: string;
   name: string;
   code: string;
   tag: string;
-  alternativeWorkcenter: string;
+  alternativeWorkcenter?: string;
   costPerHour: number;
   capacityEfficiency: number;
   oeeTarget: number;
 }
 
-// --- MAINTENANCE REQUESTS ---
+// --- 3. TEAM TYPE ---
+export interface Team {
+  id: string;
+  name: string;
+  members: string[]; // Array of member names
+  company: string;
+}
+
+// --- 4. MAINTENANCE REQUEST TYPE ---
 export interface MaintenanceRequest {
   id: string;
   subject: string;
-  createdBy: string;
-  maintenanceFor: 'Equipment' | 'Work Center';
-  equipmentId: string; // Stores ID or Name
-  category: string;
-  requestDate: string;
-  type: MaintenanceType;
-  teamId: string;
-  technicianId: string;
-  scheduledDate: string;
-  duration: number;
-  priority: PriorityLevel;
-  company: string;
-  stage: RequestStage;
   
-  // Optional content
-  notes?: string;
-  instructions?: string;
-}
+  // Who/What
+  createdBy: string;
+  technicianId?: string;
+  teamId?: string;
+  company: string;
+  
+  // Asset Info
+  maintenanceFor: 'Equipment' | 'Work Center';
+  equipmentId: string; // Stores Name or ID
+  category: string;
 
+  // Details
+  stage: 'New Request' | 'In Progress' | 'Repaired' | 'Scrap';
+  priority: 'Low' | 'Medium' | 'High';
+  type: 'Corrective' | 'Preventive';
+  description?: string; // <--- THIS WAS MISSING
+  
+  // Dates & Time
+  requestDate: string;
+  scheduledDate?: string;
+  duration?: number;
+}

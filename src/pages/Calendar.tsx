@@ -1,287 +1,114 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { requestService } from '../services/requestService';
 import { MaintenanceRequest } from '../types';
-import RequestModal from '../components/calendar/RequestModal';
-
-// --- MOCK DATA (Backend Ready structure) ---
-const MOCK_EVENTS: MaintenanceRequest[] = [
-  {
-    id: '1', subject: 'Machine Breakdown', createdBy: 'Admin', maintenanceFor: 'Equipment',
-    equipmentId: 'CNC-Lathe', category: 'Machinery', requestDate: '2025-12-18',
-    type: 'Corrective', teamId: 'Team A', technicianId: 'Mike Ross',
-    scheduledDate: '2025-12-28T10:00:00', duration: 2, priority: 'High',
-    company: 'GearGuard Inc', stage: 'New Request'
-  },
-  {
-    id: '2', subject: 'Oil Change', createdBy: 'Admin', maintenanceFor: 'Equipment',
-    equipmentId: 'Generator', category: 'Utility', requestDate: '2025-12-19',
-    type: 'Preventive', teamId: 'Team B', technicianId: 'Sarah J',
-    scheduledDate: '2025-12-29T14:30:00', duration: 1.5, priority: 'Medium',
-    company: 'GearGuard Inc', stage: 'In Progress'
-  },
-  {
-    id: '3', subject: 'Safety Inspection', createdBy: 'Admin', maintenanceFor: 'Work Center',
-    equipmentId: 'Floor A', category: 'Safety', requestDate: '2025-12-20',
-    type: 'Preventive', teamId: 'Team A', technicianId: 'Mike Ross',
-    scheduledDate: '2025-12-30T09:00:00', duration: 4, priority: 'Low',
-    company: 'GearGuard Inc', stage: 'New Request'
-  }
-];
 
 const Calendar = () => {
-  const [currentDate, setCurrentDate] = useState(new Date('2025-12-28')); // Set to match mock data week
-  const [selectedRequest, setSelectedRequest] = useState<MaintenanceRequest | null>(null);
+  const [requests, setRequests] = useState<MaintenanceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // --- HELPER FUNCTIONS ---
-  
-  // Get the start of the current week (Sunday)
-  const getStartOfWeek = (date: Date) => {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day;
-    return new Date(d.setDate(diff));
-  };
+  // 1. Fetch Requests
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const data = await requestService.getAll();
+        setRequests(data);
+      } catch (error) {
+        console.error("Error loading calendar:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
 
-  const startOfWeek = getStartOfWeek(currentDate);
-  
-  // Generate the 7 days array for the header
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(startOfWeek);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  // 2. Calendar Helper: Get Days of Current Week
+  const getDaysOfWeek = (date: Date) => {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    start.setDate(diff);
 
-  // Generate 24 hours for the sidebar
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-
-  // Navigation Logic
-  const prevWeek = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() - 7);
-    setCurrentDate(newDate);
-  };
-
-  const nextWeek = () => {
-    const newDate = new Date(currentDate);
-    newDate.setDate(newDate.getDate() + 7);
-    setCurrentDate(newDate);
-  };
-
-  // MINI CALENDAR LOGIC (For the Sidebar)
-  const renderMiniCalendar = () => {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    
     const days = [];
-    for (let i = 0; i < firstDay; i++) days.push(<div key={`empty-${i}`} />);
-    for (let i = 1; i <= daysInMonth; i++) {
-        const d = new Date(year, month, i);
-        const isToday = d.toDateString() === new Date().toDateString();
-        const isSelected = d.toDateString() === currentDate.toDateString();
-        days.push(
-            <div key={i} 
-                onClick={() => setCurrentDate(d)}
-                style={{ 
-                    width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '50%', fontSize: '12px', cursor: 'pointer',
-                    backgroundColor: isSelected ? '#2563eb' : 'transparent',
-                    color: isSelected ? 'white' : isToday ? '#2563eb' : '#333',
-                    fontWeight: isSelected || isToday ? 'bold' : 'normal'
-                }}
-            >
-                {i}
-            </div>
-        );
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      days.push(d);
     }
     return days;
   };
 
+  const weekDays = getDaysOfWeek(currentDate);
+
+  // 3. Helper: Find requests for a specific date
+  const getRequestsForDate = (date: Date) => {
+    const dateString = date.toISOString().split('T')[0];
+    return requests.filter(req => 
+      (req.scheduledDate && req.scheduledDate.startsWith(dateString)) || 
+      req.requestDate === dateString
+    );
+  };
+
+  if (loading) return <div style={{ padding: '24px' }}>Loading Schedule...</div>;
+
   return (
-    <div style={{ height: 'calc(100vh - 80px)', display: 'flex', flexDirection: 'column', backgroundColor: 'white' }}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#fff' }}>
       
-      {/* 1. TOP HEADER */}
-      <div style={{ 
-        padding: '16px 24px', borderBottom: '1px solid #e5e7eb', display: 'flex', 
-        justifyContent: 'space-between', alignItems: 'center' 
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <h2 style={{ margin: 0, fontSize: '20px' }}>Maintenance Calendar</h2>
-            <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={prevWeek} style={btnStyle}>←</button>
-                <button onClick={nextWeek} style={btnStyle}>→</button>
-                <button onClick={() => setCurrentDate(new Date())} style={btnStyle}>Today</button>
-            </div>
-            <span style={{ fontWeight: '600', color: '#4b5563' }}>
-                {startOfWeek.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-            </span>
+      {/* Sidebar (Mini Calendar) */}
+      <div style={{ width: '250px', borderRight: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+        <button style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', padding: '10px', borderRadius: '6px', fontWeight: 'bold', marginBottom: '20px', cursor: 'pointer' }}>
+          + Add
+        </button>
+        <div style={{ fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '10px' }}>
+          {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </div>
-        
-        {/* View Switcher Placeholder */}
-        <div style={{ display: 'flex', border: '1px solid #e5e7eb', borderRadius: '6px', overflow: 'hidden' }}>
-            <button style={{ padding: '6px 12px', background: '#f3f4f6', border: 'none', fontWeight: 600 }}>Week</button>
-            <button style={{ padding: '6px 12px', background: 'white', border: 'none', color: '#666' }}>Month</button>
-            <button style={{ padding: '6px 12px', background: 'white', border: 'none', color: '#666' }}>Day</button>
+        {/* Simple Navigation */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+             <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() - 7)))}>Prev</button>
+             <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() + 7)))}>Next</button>
         </div>
       </div>
 
-      {/* 2. MAIN CONTENT AREA */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      {/* Main Calendar Grid */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         
-        {/* A. THE WEEKLY GRID (Left Side - Scrollable) */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', borderRight: '1px solid #e5e7eb' }}>
-            
-            {/* Grid Header (Days) */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', paddingLeft: '50px' }}> {/* 50px offset for time column */}
-                {weekDays.map(day => {
-                    const isToday = day.toDateString() === new Date().toDateString();
-                    return (
-                        <div key={day.toString()} style={{ 
-                            flex: 1, textAlign: 'center', padding: '10px 0', borderRight: '1px solid #f3f4f6',
-                            color: isToday ? '#2563eb' : '#4b5563'
-                        }}>
-                            <div style={{ fontSize: '12px', fontWeight: 600 }}>{day.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()}</div>
-                            <div style={{ fontSize: '20px', fontWeight: isToday ? 'bold' : 'normal' }}>{day.getDate()}</div>
-                        </div>
-                    );
-                })}
+        {/* Header Row (Days) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid #e5e7eb' }}>
+          {weekDays.map((day, index) => (
+            <div key={index} style={{ padding: '15px', textAlign: 'center', borderRight: '1px solid #f3f4f6' }}>
+              <div style={{ fontSize: '12px', color: '#6b7280', textTransform: 'uppercase' }}>
+                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+              </div>
+              <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginTop: '4px' }}>
+                {day.getDate()}
+              </div>
             </div>
-
-            {/* Grid Body (Hours & Events) */}
-            <div style={{ position: 'relative', flex: 1, minHeight: '1440px' }}> {/* 1440px = 60px height * 24 hours */}
-                
-                {/* Time Labels Column */}
-                <div style={{ position: 'absolute', width: '50px', top: 0, bottom: 0, borderRight: '1px solid #e5e7eb', backgroundColor: '#fff' }}>
-                    {hours.map(h => (
-                        <div key={h} style={{ 
-                            height: '60px', textAlign: 'right', paddingRight: '8px', fontSize: '11px', color: '#9ca3af',
-                            transform: 'translateY(-6px)' 
-                        }}>
-                            {h}:00
-                        </div>
-                    ))}
-                </div>
-
-                {/* Vertical Lines for Days */}
-                <div style={{ marginLeft: '50px', display: 'flex', height: '100%' }}>
-                    {weekDays.map((_, i) => (
-                        <div key={i} style={{ flex: 1, borderRight: '1px solid #f3f4f6', position: 'relative' }}>
-                            {/* Horizontal Lines for Hours */}
-                            {hours.map(h => (
-                                <div key={h} style={{ height: '60px', borderBottom: '1px solid #f9fafb' }} />
-                            ))}
-                        </div>
-                    ))}
-                </div>
-
-                {/* THE EVENTS LAYER */}
-                {/* We map specific mock events that fall in this week */}
-                <div style={{ position: 'absolute', top: 0, left: '50px', right: 0, height: '100%', pointerEvents: 'none' }}>
-                    {MOCK_EVENTS.map(ev => {
-                        const date = new Date(ev.scheduledDate);
-                        // Check if event is in current view
-                        if (date >= startOfWeek && date < new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000)) {
-                            
-                            // Calculate positioning
-                            const dayIndex = date.getDay(); // 0-6
-                            const startHour = date.getHours() + (date.getMinutes() / 60);
-                            const duration = ev.duration;
-
-                            return (
-                                <div 
-                                    key={ev.id}
-                                    onClick={() => setSelectedRequest(ev)}
-                                    style={{
-                                        position: 'absolute',
-                                        left: `${(dayIndex * 100) / 7}%`,
-                                        width: `${100 / 7}%`,
-                                        top: `${startHour * 60}px`, // 60px per hour
-                                        height: `${duration * 60}px`,
-                                        padding: '2px',
-                                        pointerEvents: 'auto', // Re-enable clicks
-                                        zIndex: 10
-                                    }}
-                                >
-                                    <div style={{
-                                        backgroundColor: ev.priority === 'High' ? '#fee2e2' : '#dbeafe',
-                                        borderLeft: `3px solid ${ev.priority === 'High' ? '#dc2626' : '#2563eb'}`,
-                                        height: '100%',
-                                        borderRadius: '4px',
-                                        padding: '4px 8px',
-                                        fontSize: '11px',
-                                        cursor: 'pointer',
-                                        overflow: 'hidden',
-                                        boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
-                                    }}>
-                                        <div style={{ fontWeight: 'bold', color: '#333' }}>{ev.subject}</div>
-                                        <div style={{ color: '#666' }}>{date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                                    </div>
-                                </div>
-                            );
-                        }
-                        return null;
-                    })}
-                </div>
-
-            </div>
+          ))}
         </div>
 
-        {/* B. SIDEBAR (Mini Calendar) */}
-        <div style={{ width: '280px', padding: '20px', borderLeft: '1px solid #e5e7eb', backgroundColor: '#f9fafb' }}>
-            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontWeight: 'bold' }}>
-                    {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </span>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <span style={{ cursor: 'pointer', fontSize: '12px' }}>&lt;</span>
-                    <span style={{ cursor: 'pointer', fontSize: '12px' }}>&gt;</span>
-                </div>
-            </div>
-            
-            {/* Mini Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', fontSize: '12px', textAlign: 'center', marginBottom: '8px', color: '#9ca3af' }}>
-                <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-                {renderMiniCalendar()}
-            </div>
-
-            <div style={{ marginTop: '30px', padding: '15px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                <h4 style={{ margin: '0 0 10px 0', fontSize: '14px' }}>Quick Stats</h4>
-                <div style={{ fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
-                    <span>Scheduled this week:</span>
-                    <strong>3</strong>
-                </div>
-                <div style={{ fontSize: '12px', color: '#666', display: 'flex', justifyContent: 'space-between' }}>
-                    <span>High Priority:</span>
-                    <strong style={{ color: '#dc2626' }}>1</strong>
-                </div>
-            </div>
+        {/* Calendar Body (Events) */}
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', backgroundColor: '#f9fafb' }}>
+          {weekDays.map((day, index) => {
+            const daysRequests = getRequestsForDate(day);
+            return (
+              <div key={index} style={{ borderRight: '1px solid #e5e7eb', padding: '10px', minHeight: '100px' }}>
+                {daysRequests.map(req => (
+                  <div key={req.id} style={{ 
+                    backgroundColor: 'white', borderLeft: `4px solid ${req.priority === 'High' ? '#ef4444' : '#3b82f6'}`,
+                    padding: '8px', marginBottom: '8px', borderRadius: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', fontSize: '12px'
+                  }}>
+                    <div style={{ fontWeight: '600', color: '#1f2937' }}>{req.equipmentId}</div>
+                    <div style={{ color: '#6b7280', marginTop: '2px' }}>{req.technicianId}</div>
+                    <div style={{ marginTop: '4px', fontSize: '10px', color: '#9ca3af' }}>{req.stage}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
-
       </div>
-
-      {/* 3. MODAL POPUP */}
-      {selectedRequest && (
-        <RequestModal 
-            request={selectedRequest} 
-            onClose={() => setSelectedRequest(null)} 
-        />
-      )}
-
     </div>
   );
-};
-
-// Styles
-const btnStyle = {
-    background: 'white',
-    border: '1px solid #e5e7eb',
-    padding: '6px 10px',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    color: '#374151',
-    fontSize: '14px'
 };
 
 export default Calendar;

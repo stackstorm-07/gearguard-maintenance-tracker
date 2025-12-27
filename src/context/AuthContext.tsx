@@ -1,31 +1,27 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '../firebase';
+import React, { createContext, useContext, useState } from 'react';
+import { User } from 'firebase/auth';
 
 interface AuthContextType {
-  currentUser: User | null;
+  currentUser: any; // Using 'any' for quick mock
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ currentUser: null, loading: true });
+// MOCK USER DATA
+const MOCK_USER = {
+  uid: 'test-admin-123',
+  displayName: 'Test Admin',
+  email: 'admin@gearguard.com'
+};
+
+const AuthContext = createContext<AuthContextType>({ currentUser: MOCK_USER, loading: false });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-    return unsubscribe;
-  }, []);
-
+  // Always return the mock user, no loading
   return (
-    <AuthContext.Provider value={{ currentUser, loading }}>
-      {!loading && children}
+    <AuthContext.Provider value={{ currentUser: MOCK_USER, loading: false }}>
+      {children}
     </AuthContext.Provider>
   );
 };

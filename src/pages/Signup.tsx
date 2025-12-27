@@ -71,7 +71,7 @@ const Signup = () => {
         <form onSubmit={handleSignup}>
           <div style={{ marginBottom: '20px' }}>
              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#374151' }}>Name</label>
-             <input name="name" type="text" onChange={handleChange} required style={{ width: '100%', padding: '10px', borderBottom: '1px solid #9ca3af', border: 'none', borderBottom: '1px solid #9ca3af', outline: 'none' }} />
+             <input name="name" type="text" onChange={handleChange} required style={{ width: '100%', padding: '10px', borderBottom: '1px solid #9ca3af', border: 'none',  outline: 'none' }} />
           </div>
 
           <div style={{ marginBottom: '20px' }}>

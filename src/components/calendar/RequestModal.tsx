@@ -49,7 +49,8 @@ const RequestModal: React.FC<Props> = ({ request, onClose }) => {
           <div>
             <label style={{ color: '#666', fontSize: '12px' }}>Scheduled Time</label>
             <div style={{ fontWeight: 500 }}>
-              {new Date(request.scheduledDate).toLocaleString()} ({request.duration} hrs)
+              {/* FIX: Use requestDate as fallback if scheduledDate is missing */}
+              {new Date(request.scheduledDate || request.requestDate).toLocaleString()} ({request.duration || 0} hrs)
             </div>
           </div>
           
@@ -57,6 +58,13 @@ const RequestModal: React.FC<Props> = ({ request, onClose }) => {
              <label style={{ color: '#666', fontSize: '12px' }}>Priority</label>
              <div style={{ fontWeight: 500, color: request.priority === 'High' ? 'red' : 'black' }}>{request.priority}</div>
           </div>
+
+          {request.description && (
+            <div>
+               <label style={{ color: '#666', fontSize: '12px' }}>Description</label>
+               <div style={{ marginTop: '4px', color: '#374151' }}>{request.description}</div>
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
